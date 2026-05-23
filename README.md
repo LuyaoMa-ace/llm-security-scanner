@@ -20,7 +20,8 @@ Built as a research prototype exploring LLM-based static analysis for open-sourc
 
 ```
 llm-security-scanner/
-├── index.html              # Web demo (open in browser)
+├── index.html              # Web demo (requires server.py)
+├── server.py               # Flask server (bridges browser and API)
 ├── scanner.py              # CLI tool
 ├── examples/
 │   ├── command_injection.py
@@ -36,24 +37,29 @@ llm-security-scanner/
 
 ### 1. Get an Anthropic API key
 
-Sign up at [console.anthropic.com](https://console.anthropic.com) and create an API key.
+1. Go to [console.anthropic.com](https://console.anthropic.com) and sign up
+2. Click **API Keys** → **Create Key**
+3. Add a credit card and top up a minimum of **$5** (pay-as-you-go, not a subscription)
+4. Copy your key — it starts with `sk-ant-...`
+
+> ⚠️ Note: Claude Pro (claude.ai subscription) does NOT include API access. The API is billed separately.
 
 ### 2. Set your API key
 
 **macOS / Linux:**
 ```bash
-export ANTHROPIC_API_KEY=your_key_here
+export ANTHROPIC_API_KEY=sk-ant-your_key_here
 ```
 
 **Windows (PowerShell):**
 ```powershell
-$env:ANTHROPIC_API_KEY = "your_key_here"
+$env:ANTHROPIC_API_KEY = "sk-ant-your_key_here"
 ```
 
-### 3. Install dependencies (CLI only)
+### 3. Install dependencies
 
 ```bash
-pip install anthropic
+pip3 install anthropic flask flask-cors
 ```
 
 ---
@@ -62,29 +68,34 @@ pip install anthropic
 
 ### Web Demo
 
-1. Open `index.html` in your browser
-2. Select a preset from the left panel, or paste your own Python code
-3. Click **Analyze Code**
-4. View the security report with severity badges and fix suggestions
+The web demo requires the local Flask server to proxy requests to the Anthropic API.
 
-> Note: The web demo calls the Anthropic API directly from the browser. Your API key is not required in the HTML — the demo uses the Claude.ai proxy. For self-hosted use, add your key to the fetch headers in `index.html`.
+```bash
+# Start the server
+python3 server.py
 
----
+# Then open in your browser
+http://localhost:5000
+```
+
+1. Select a preset from the left panel, or paste your own Python code
+2. Click **Analyze Code**
+3. View the security report with severity badges and fix suggestions
 
 ### CLI Tool
 
 ```bash
-python scanner.py <path_to_file>
+python3 scanner.py <path_to_file>
 ```
 
 **Examples:**
 
 ```bash
-# Scan a single file
-python scanner.py examples/command_injection.py
+# Scan a preset example
+python3 scanner.py examples/command_injection.py
 
 # Scan your own code
-python scanner.py myproject/app.py
+python3 scanner.py myproject/app.py
 ```
 
 **Sample output:**
@@ -107,13 +118,6 @@ Issue 1
   Line      line 6
   Problem   os.system() passes raw user input directly to the shell
   Fix       Use subprocess.run() with a list of arguments and shell=False
-
-Issue 2
-  Type      Command Injection
-  Severity  HIGH
-  Line      line 11
-  Problem   subprocess.call() with shell=True enables shell injection
-  Fix       Pass arguments as a list: subprocess.call(["ping", "-c", "1", hostname])
 ...
 ```
 
@@ -165,6 +169,44 @@ This prototype is inspired by research on using LLMs for automated security asse
 
 ## Author
 
-**Luyao Ma**  
-M.Sc. Artificial Intelligence — University of Bologna  
+**Luyao Ma**
+M.Sc. Artificial Intelligence — University of Bologna
 [github.com/LuyaoMa-ace](https://github.com/LuyaoMa-ace)
+
+---
+
+## Docker (recommended)
+
+Run the web demo in a container — no Python installation needed.
+
+### Option A: Docker Compose (easiest)
+
+```bash
+# Set your API key
+export ANTHROPIC_API_KEY=sk-ant-your_key_here
+
+# Build and start
+docker compose up
+
+# Open in browser
+http://localhost:5000
+```
+
+### Option B: Docker only
+
+```bash
+# Build the image
+docker build -t llm-security-scanner .
+
+# Run the container
+docker run -p 5000:5000 -e ANTHROPIC_API_KEY=sk-ant-your_key_here llm-security-scanner
+
+# Open in browser
+http://localhost:5000
+```
+
+### Stop the container
+
+```bash
+docker compose down
+```

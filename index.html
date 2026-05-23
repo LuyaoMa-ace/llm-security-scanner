@@ -629,35 +629,16 @@ async function analyze() {
     </div>`;
   document.getElementById('issueCount').textContent = '';
 
-  const prompt = `You are a security analyst. Analyze this Python code for security vulnerabilities.
-
-Return ONLY a raw JSON array. No markdown, no explanation, no backticks. Just the JSON array.
-
-Each object must have exactly these fields:
-- "type": short name (e.g. "Command Injection")
-- "severity": one of "HIGH", "MEDIUM", "LOW"
-- "line": line number as integer (best estimate)
-- "problem": one sentence describing the specific risk
-- "fix": one sentence describing the recommended fix
-
-Code:
-${code}`;
-
   try {
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
+    const response = await fetch("/analyze", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
-        max_tokens: 1000,
-        messages: [{ role: "user", content: prompt }]
-      })
+      body: JSON.stringify({ code })
     });
 
     const data = await response.json();
-    const text = data.content.map(b => b.text || '').join('');
-    const clean = text.replace(/```json|```/g, '').trim();
-    const issues = JSON.parse(clean);
+    if (data.error) throw new Error(data.error);
+    const issues = data.issues;
     renderReport(issues);
   } catch (err) {
     document.getElementById('reportBody').innerHTML =
