@@ -149,7 +149,6 @@ The prompt instructs Claude to act as a security analyst and return structured J
 
 ![Security Scanner Web Demo](screenshot.png)
 
-*(Add a screenshot of the web demo here)*
 
 ---
 
