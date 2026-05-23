@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LLM Security Scanner</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --bg2: #161b22;
+    --bg3: #21262d;
+    --border: #30363d;
+    --text: #e6edf3;
+    --text2: #8b949e;
+    --text3: #6e7681;
+    --accent: #58a6ff;
+    --high: #f85149;
+    --high-bg: rgba(248,81,73,0.1);
+    --med: #d29922;
+    --med-bg: rgba(210,153,34,0.1);
+    --low: #3fb950;
+    --low-bg: rgba(63,185,80,0.1);
+    --radius: 6px;
+    --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-mono);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .logo-icon {
+    width: 28px;
+    height: 28px;
+    background: var(--accent);
+    border-radius: var(--radius);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+  }
+
+  .logo-text {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: -0.02em;
+  }
+
+  .badge {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    background: rgba(88,166,255,0.1);
+    color: var(--accent);
+    border: 1px solid rgba(88,166,255,0.3);
+  }
+
+  .main {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  .sidebar {
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .sidebar-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text3);
+    padding: 0 4px;
+    margin-bottom: 4px;
+  }
+
+  .preset-btn {
+    width: 100%;
+    text-align: left;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+    color: var(--text);
+    font-family: var(--font-mono);
+  }
+
+  .preset-btn:hover {
+    border-color: var(--accent);
+    background: rgba(88,166,255,0.05);
+  }
+
+  .preset-btn.active {
+    border-color: var(--high);
+    background: var(--high-bg);
+  }
+
+  .preset-name {
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 3px;
+    color: var(--text);
+  }
+
+  .preset-btn.active .preset-name { color: var(--high); }
+
+  .preset-tag {
+    font-size: 10px;
+    color: var(--text3);
+  }
+
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 4px 0;
+  }
+
+  .sidebar-note {
+    font-size: 10px;
+    color: var(--text3);
+    line-height: 1.6;
+    padding: 8px;
+    background: var(--bg3);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+  }
+
+  .content {
+    display: grid;
+    grid-template-rows: 1fr auto auto;
+    overflow: hidden;
+    padding: 16px;
+    gap: 12px;
+  }
+
+  .editor-wrap {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    background: var(--bg2);
+  }
+
+  .editor-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg3);
+  }
+
+  .editor-label {
+    font-size: 11px;
+    color: var(--text3);
+  }
+
+  .clear-btn {
+    font-size: 11px;
+    color: var(--text3);
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: var(--font-mono);
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: all 0.1s;
+  }
+
+  .clear-btn:hover {
+    background: var(--bg);
+    color: var(--text2);
+  }
+
+  textarea {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    padding: 14px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    line-height: 1.7;
+    color: var(--text);
+    resize: none;
+    min-height: 220px;
+  }
+
+  textarea::placeholder { color: var(--text3); }
+
+  .analyze-btn {
+    width: 100%;
+    padding: 11px;
+    background: var(--accent);
+    color: #0d1117;
+    border: none;
+    border-radius: var(--radius);
+    font-size: 13px;
+    font-weight: 700;
+    font-family: var(--font-mono);
+    cursor: pointer;
+    transition: opacity 0.15s;
+    letter-spacing: 0.02em;
+  }
+
+  .analyze-btn:hover { opacity: 0.85; }
+  .analyze-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .report-wrap {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    background: var(--bg2);
+    min-height: 160px;
+  }
+
+  .report-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg3);
+  }
+
+  .report-label {
+    font-size: 11px;
+    color: var(--text3);
+  }
+
+  .report-count {
+    font-size: 11px;
+    color: var(--text2);
+  }
+
+  .report-body {
+    padding: 14px;
+  }
+
+  .placeholder-text {
+    font-size: 12px;
+    color: var(--text3);
+    line-height: 1.6;
+  }
+
+  .loading {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--text2);
+  }
+
+  .spinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .summary-bar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+
+  .summary-pill {
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-weight: 600;
+    border: 1px solid;
+  }
+
+  .pill-high { background: var(--high-bg); color: var(--high); border-color: rgba(248,81,73,0.3); }
+  .pill-med  { background: var(--med-bg);  color: var(--med);  border-color: rgba(210,153,34,0.3); }
+  .pill-low  { background: var(--low-bg);  color: var(--low);  border-color: rgba(63,185,80,0.3); }
+
+  .issue-card {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 8px;
+    overflow: hidden;
+  }
+
+  .issue-card:last-child { margin-bottom: 0; }
+
+  .issue-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: var(--bg3);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .sev-badge {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 4px;
+  }
+
+  .sev-HIGH { background: var(--high-bg); color: var(--high); }
+  .sev-MEDIUM { background: var(--med-bg); color: var(--med); }
+  .sev-LOW { background: var(--low-bg); color: var(--low); }
+
+  .issue-type {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
+    flex: 1;
+  }
+
+  .issue-line {
+    font-size: 11px;
+    color: var(--text3);
+    background: var(--bg);
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+  }
+
+  .issue-body {
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .issue-row {
+    display: flex;
+    gap: 10px;
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  .issue-row-label {
+    color: var(--text3);
+    min-width: 64px;
+    flex-shrink: 0;
+  }
+
+  .issue-row-value { color: var(--text2); }
+
+  .no-issues {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--low);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">🔍</div>
+    <span class="logo-text">LLM Security Scanner</span>
+  </div>
+  <span class="badge">powered by Claude</span>
+</header>
+
+<div class="main">
+  <div class="sidebar">
+    <div class="sidebar-label">Presets</div>
+
+    <button class="preset-btn" onclick="loadSample('cmd')">
+      <div class="preset-name">Command Injection</div>
+      <div class="preset-tag">os.system · subprocess</div>
+    </button>
+
+    <button class="preset-btn" onclick="loadSample('path')">
+      <div class="preset-name">Path Traversal</div>
+      <div class="preset-tag">open() · no validation</div>
+    </button>
+
+    <button class="preset-btn" onclick="loadSample('secret')">
+      <div class="preset-name">Hardcoded Secret</div>
+      <div class="preset-tag">API key · password</div>
+    </button>
+
+    <button class="preset-btn" onclick="loadSample('eval')">
+      <div class="preset-name">Code Injection</div>
+      <div class="preset-tag">eval() · exec()</div>
+    </button>
+
+    <div class="divider"></div>
+
+    <div class="sidebar-note">
+      Select a preset or paste your own Python code into the editor, then click Analyze.
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="editor-wrap">
+      <div class="editor-header">
+        <span class="editor-label">python · code editor</span>
+        <button class="clear-btn" onclick="clearAll()">clear</button>
+      </div>
+      <textarea id="codeInput" placeholder="# Paste your Python code here, or select a preset from the left..."></textarea>
+    </div>
+
+    <button class="analyze-btn" id="analyzeBtn" onclick="analyze()">
+      ⚡ Analyze Code
+    </button>
+
+    <div class="report-wrap">
+      <div class="report-header">
+        <span class="report-label">Security Report</span>
+        <span class="report-count" id="issueCount"></span>
+      </div>
+      <div class="report-body" id="reportBody">
+        <div class="placeholder-text">// Select a preset or paste code above, then click Analyze Code</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const samples = {
+  cmd: `import os
+import subprocess
+
+def run_command(user_input):
+    # Directly executes user-supplied shell command
+    os.system(user_input)
+
+def ping_host(hostname):
+    # Concatenates user input into shell string
+    subprocess.call("ping -c 1 " + hostname, shell=True)
+
+def backup_files(directory):
+    cmd = f"tar -czf backup.tar.gz {directory}"
+    os.system(cmd)
+
+if __name__ == "__main__":
+    user_cmd = input("Enter command: ")
+    run_command(user_cmd)
+    host = input("Enter hostname: ")
+    ping_host(host)`,
+
+  path: `import os
+
+def read_user_file(filename):
+    # No path validation — user controls file path
+    with open(filename, 'r') as f:
+        return f.read()
+
+def save_report(output_path, content):
+    # Writes to any path the user specifies
+    with open(output_path, 'w') as f:
+        f.write(content)
+
+def get_config(config_name):
+    config_dir = "/app/configs/"
+    # Still vulnerable — user can use ../../ to escape
+    path = config_dir + config_name
+    with open(path, 'r') as f:
+        return f.read()
+
+if __name__ == "__main__":
+    fname = input("Enter file to read: ")
+    print(read_user_file(fname))`,
+
+  secret: `import requests
+import psycopg2
+
+# Hardcoded credentials — never do this!
+API_KEY = "sk-proj-abc123XYZsupersecretkey9999"
+DB_PASSWORD = "admin1234"
+DB_USER = "root"
+AWS_SECRET = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+AWS_ACCESS = "AKIAIOSFODNN7EXAMPLE"
+GITHUB_TOKEN = "ghp_16C7e42F292c6912E7710c838347Ae651246"
+
+def call_api(endpoint):
+    headers = {"Authorization": f"Bearer {API_KEY}"}
+    return requests.get(endpoint, headers=headers)
+
+def connect_database():
+    conn = psycopg2.connect(
+        host="db.internal.company.com",
+        user=DB_USER,
+        password=DB_PASSWORD,
+        database="production"
+    )
+    return conn
+
+def upload_to_s3(file_path):
+    import boto3
+    session = boto3.Session(
+        aws_access_key_id=AWS_ACCESS,
+        aws_secret_access_key=AWS_SECRET,
+    )`,
+
+  eval: `def calculate(expression):
+    # Evaluates arbitrary Python expressions from user input
+    result = eval(expression)
+    return result
+
+def run_admin_script(code):
+    # Executes arbitrary code supplied by the user
+    exec(code)
+
+def parse_config(config_str):
+    # Using eval to parse config instead of json/ast
+    config = eval(config_str)
+    return config
+
+def dynamic_filter(data, filter_expr):
+    # Applies a user-defined filter expression
+    return [item for item in data if eval(filter_expr)]
+
+if __name__ == "__main__":
+    expr = input("Enter math expression: ")
+    print(f"Result: {calculate(expr)}")
+
+    script = input("Enter admin script: ")
+    run_admin_script(script)`
+};
+
+function loadSample(key) {
+  document.getElementById('codeInput').value = samples[key];
+  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+  const idx = ['cmd','path','secret','eval'].indexOf(key);
+  document.querySelectorAll('.preset-btn')[idx].classList.add('active');
+  document.getElementById('reportBody').innerHTML = '<div class="placeholder-text">// Click Analyze Code to scan this snippet</div>';
+  document.getElementById('issueCount').textContent = '';
+}
+
+function clearAll() {
+  document.getElementById('codeInput').value = '';
+  document.getElementById('reportBody').innerHTML = '<div class="placeholder-text">// Select a preset or paste code above, then click Analyze Code</div>';
+  document.getElementById('issueCount').textContent = '';
+  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+}
+
+function renderReport(issues) {
+  const count = issues.length;
+  document.getElementById('issueCount').textContent = `${count} issue${count !== 1 ? 's' : ''} found`;
+
+  if (count === 0) {
+    document.getElementById('reportBody').innerHTML = '<div class="no-issues">✓ No security issues detected</div>';
+    return;
+  }
+
+  const high = issues.filter(i => i.severity === 'HIGH').length;
+  const med  = issues.filter(i => i.severity === 'MEDIUM').length;
+  const low  = issues.filter(i => i.severity === 'LOW').length;
+
+  let html = '<div class="summary-bar">';
+  if (high) html += `<span class="summary-pill pill-high">● ${high} HIGH</span>`;
+  if (med)  html += `<span class="summary-pill pill-med">● ${med} MEDIUM</span>`;
+  if (low)  html += `<span class="summary-pill pill-low">● ${low} LOW</span>`;
+  html += '</div>';
+
+  issues.forEach(issue => {
+    html += `
+      <div class="issue-card">
+        <div class="issue-head">
+          <span class="sev-badge sev-${issue.severity}">${issue.severity}</span>
+          <span class="issue-type">${issue.type}</span>
+          <span class="issue-line">line ${issue.line}</span>
+        </div>
+        <div class="issue-body">
+          <div class="issue-row">
+            <span class="issue-row-label">Problem</span>
+            <span class="issue-row-value">${issue.problem}</span>
+          </div>
+          <div class="issue-row">
+            <span class="issue-row-label">Fix</span>
+            <span class="issue-row-value">${issue.fix}</span>
+          </div>
+        </div>
+      </div>`;
+  });
+
+  document.getElementById('reportBody').innerHTML = html;
+}
+
+async function analyze() {
+  const code = document.getElementById('codeInput').value.trim();
+  if (!code) return;
+
+  const btn = document.getElementById('analyzeBtn');
+  btn.disabled = true;
+  document.getElementById('reportBody').innerHTML = `
+    <div class="loading">
+      <div class="spinner"></div>
+      Analyzing with Claude...
+    </div>`;
+  document.getElementById('issueCount').textContent = '';
+
+  const prompt = `You are a security analyst. Analyze this Python code for security vulnerabilities.
+
+Return ONLY a raw JSON array. No markdown, no explanation, no backticks. Just the JSON array.
+
+Each object must have exactly these fields:
+- "type": short name (e.g. "Command Injection")
+- "severity": one of "HIGH", "MEDIUM", "LOW"
+- "line": line number as integer (best estimate)
+- "problem": one sentence describing the specific risk
+- "fix": one sentence describing the recommended fix
+
+Code:
+${code}`;
+
+  try {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1000,
+        messages: [{ role: "user", content: prompt }]
+      })
+    });
+
+    const data = await response.json();
+    const text = data.content.map(b => b.text || '').join('');
+    const clean = text.replace(/```json|```/g, '').trim();
+    const issues = JSON.parse(clean);
+    renderReport(issues);
+  } catch (err) {
+    document.getElementById('reportBody').innerHTML =
+      '<div class="placeholder-text">// Error during analysis. Check your API key and try again.</div>';
+    document.getElementById('issueCount').textContent = '';
+  }
+
+  btn.disabled = false;
+}
+</script>
+</body>
+</html>
