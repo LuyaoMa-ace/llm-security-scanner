@@ -79,8 +79,10 @@ The web demo requires the local Flask server to proxy requests to the Anthropic 
 python3 server.py
 
 # Then open in your browser
-http://localhost:5000
+http://127.0.0.1:5000
 ```
+
+> **macOS note:** on recent macOS versions, port 5000 is also used by the AirPlay Receiver. If `http://localhost:5000` shows a 403 error, use `http://127.0.0.1:5000` as above, or turn off *AirPlay Receiver* in System Settings → General → AirDrop & Handoff.
 
 1. Select a preset from the left panel, or paste your own Python code
 2. Click **Analyze Code**
@@ -192,7 +194,7 @@ export ANTHROPIC_API_KEY=sk-ant-your_key_here
 docker compose up
 
 # Open in browser
-http://localhost:5000
+http://127.0.0.1:5000
 ```
 
 ### Option B: Docker only
@@ -202,10 +204,10 @@ http://localhost:5000
 docker build -t llm-security-scanner .
 
 # Run the container
-docker run -p 5000:5000 -e ANTHROPIC_API_KEY=sk-ant-your_key_here llm-security-scanner
+docker run -p 127.0.0.1:5000:5000 -e ANTHROPIC_API_KEY=sk-ant-your_key_here llm-security-scanner
 
 # Open in browser
-http://localhost:5000
+http://127.0.0.1:5000
 ```
 
 ### Stop the container

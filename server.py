@@ -8,7 +8,7 @@ Usage:
     export ANTHROPIC_API_KEY=your_key_here
     python server.py
 
-Then open: http://localhost:5000
+Then open: http://127.0.0.1:5000
 """
 
 import os
@@ -86,7 +86,7 @@ if __name__ == "__main__":
         print("   Run: export ANTHROPIC_API_KEY=your_key_here\n")
     else:
         print("\n✅ LLM Security Scanner server starting...")
-        print("   Open your browser at: http://localhost:5000\n")
+        print("   Open your browser at: http://127.0.0.1:5000\n")
 
     # Bind to localhost by default; the Docker image sets HOST=0.0.0.0 and
     # docker-compose publishes the port on 127.0.0.1 only.
