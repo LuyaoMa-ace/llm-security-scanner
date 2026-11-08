@@ -17,7 +17,9 @@ import anthropic
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 
-app = Flask(__name__, static_folder=".")
+# No static folder: serving "." would expose source files and .git/. The index page
+# is served explicitly by the "/" route below.
+app = Flask(__name__, static_folder=None)
 CORS(app)
 
 PROMPT_TEMPLATE = """You are a security analyst. Analyze this Python code for security vulnerabilities.
