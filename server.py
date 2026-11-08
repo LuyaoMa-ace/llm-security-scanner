@@ -86,4 +86,6 @@ if __name__ == "__main__":
         print("\n✅ LLM Security Scanner server starting...")
         print("   Open your browser at: http://localhost:5000\n")
 
-    app.run(host="0.0.0.0", debug=False, port=5000)
+    # Bind to localhost by default; the Docker image sets HOST=0.0.0.0 and
+    # docker-compose publishes the port on 127.0.0.1 only.
+    app.run(host=os.environ.get("HOST", "127.0.0.1"), debug=False, port=5000)

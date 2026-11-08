@@ -2,7 +2,11 @@
 
 A security analysis tool that uses **Claude (claude-sonnet-4-20250514)** to detect vulnerabilities in Python source code. Identifies issues like command injection, path traversal, hardcoded secrets, and code injection — with severity ratings and fix suggestions.
 
-Built as a research prototype exploring LLM-based static analysis for open-source software security.
+Built as a research prototype exploring LLM-based static analysis for open-source software security. This is a small side project using a hosted LLM API; it is separate from my thesis research.
+
+> **Privacy:** the code you scan is sent to Anthropic's API. Do not scan proprietary or sensitive code.
+>
+> **Note:** all credentials in `examples/` and in the web demo samples are fake and for demonstration only.
 
 ---
 
@@ -147,7 +151,7 @@ The prompt instructs Claude to act as a security analyst and return structured J
 
 ## Screenshot
 
-![Security Scanner Web Demo](screenshot.png)
+![Security Scanner Web Demo](Screenshot.png)
 
 
 ---

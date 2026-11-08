@@ -1,5 +1,6 @@
 # examples/hardcoded_secret.py
 # WARNING: This file contains INTENTIONAL security vulnerabilities for testing purposes.
+# All credentials below are fake, for demonstration only.
 
 import requests
 
